@@ -2,52 +2,93 @@ const path = require("path");
 const { merge } = require("lodash");
 const logger = require("./logger.js");
 const getFreePorts = require("./free-port.js");
+const fs = require("fs");
 
 const defaultConfig = {
-  pathToStatic: "static",
-  mainMdFilename: "main.md",
-  removeTemp: true,
-  contents: "docs/_sidebar.md",
-  pathToPublic: "./pdf/readme.pdf",
-  pdfOptions: { format: "A4" },
-  emulateMedia: "print",
-  pathToDocsifyEntryPoint: ".",
+  contents: [], // array of "table of contents" files path
+  pathToPublic: 'files/pdf', // path where pdf will stored
+  pathToPublicHtml: 'files/html', // path where pdf will stored
+  pathToDocsifyStyles: 'assets/css/docsify4-themes-vue.css', // path where pdf will stored
+  removeTemp: true, // remove generated .md and .html or not
+  emulateMedia: 'screen', // mediaType, emulating by puppeteer for rendering pdf, 'print' by default (reference:
+  // https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageemulatemediamediatype)
+  pathToDocsifyEntryPoint: '.',
+  pathToStatic: 'docs/static',
+  routeToStatic: 'static',
+  mainMdFilename: 'main.md',
+  pdfOptions: {
+    format: 'A2', margin: {
+      bottom: 120, // minimum required for footer msg to display
+      left: 0,
+      right: 0,
+      top: 70,
+    }
+  },
 };
 
 const run = async incomingConfig => {
-  const [docsifyRendererPort, docsifyLiveReloadPort] = await getFreePorts();
   const preBuildedConfig = merge(defaultConfig, incomingConfig);
 
-  logger.info("Build with settings:");
-  console.log(JSON.stringify(preBuildedConfig, null, 2));
-  console.log("\n");
+  fs.readdirSync('docs').forEach(file => {
+    if (new RegExp(/([^\/]+\.md)$/).test(file) && !(new RegExp(/(_sidebar.md)$/).test(file))) {
+      return;
+    }
 
-  const config = merge(preBuildedConfig, {
-    docsifyRendererPort,
-    docsifyLiveReloadPort,
+    if (new RegExp(/(_sidebar.md)$/).test(file)) {
+      preBuildedConfig.contents.push('docs/' + file);
+    } else {
+      fs.readdirSync('docs/' + file).forEach(file1 => {
+        if (new RegExp(/(_sidebar.md)$/).test(file1)) {
+          preBuildedConfig.contents.push('docs/' + file + '/' + file1);
+        }
+      })
+    }
   });
 
-  const { combineMarkdowns } = require("./markdown-combine.js")(config);
-  const { closeProcess, prepareEnv, cleanUp } = require("./utils.js")(config);
-  const { createRoadMap } = require("./contents-builder.js")(config);
-  const { runDocsifyRenderer } = require("./docsify-server.js")(config);
-  const { htmlToPdf } = require("./render.js")(config);
+  for (const document of preBuildedConfig.contents) {
+    const [docsifyRendererPort, docsifyLiveReloadPort] = await getFreePorts();
 
-  try {
-    await cleanUp();
-    await prepareEnv();
-    const roadMap = await createRoadMap();
-    await combineMarkdowns(roadMap);
+    const config = {
+      ...preBuildedConfig,
+      docsifyRendererPort,
+      docsifyLiveReloadPort,
+      contents: [document]
+    };
 
-    runDocsifyRenderer();
-    await htmlToPdf();
+    const finalName = path.resolve(config.contents[0]).match(/.*\/([^\/]+)\/.*/m)[1];
 
-    logger.success(path.resolve(config.pathToPublic));
-  } catch (error) {
-    logger.err("run error", error);
-  } finally {
-    closeProcess(0);
+    config.pathToPublic += `/${finalName}.pdf`;
+    config.pathToPublicHtml += `/${finalName}.html`;
+    config.finalName = finalName;
+
+    logger.info("Build with settings:");
+    console.log(JSON.stringify(config, null, 2));
+    console.log("\n");
+
+    const { combineMarkdowns } = require("./markdown-combine.js")(config);
+    const { closeProcess, prepareEnv, cleanUp } = require("./utils.js")(config);
+    const { createRoadMap } = require("./contents-builder.js")(config);
+    const { runDocsifyRenderer } = require("./docsify-server.js")(config);
+    const { htmlToPdf } = require("./render.js")(config);
+
+    try {
+      await cleanUp();
+      await prepareEnv();
+      const { roadMap, resume } = await createRoadMap();
+      await combineMarkdowns(roadMap, resume);
+
+      runDocsifyRenderer();
+      await htmlToPdf();
+
+      logger.success(path.resolve(config.pathToPublic));
+    } catch (error) {
+      logger.err("run error", error);
+    } finally {
+      await closeProcess();
+    }
   }
+
+  return process.exit(0);
 };
 
 module.exports = run;

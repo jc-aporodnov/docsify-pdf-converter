@@ -14,6 +14,7 @@ module.exports = ({ pathToStatic }) => ({ content, name }) => {
   const dirWithStatic = path.resolve(process.cwd(), pathToStatic);
 
   markdownLinkExtractor(content)
+    .links
     .filter(link => !isUrl(link))
     .filter(isImg)
     .map(link => ({ origin: link, processed: path.resolve(dir, link) }))

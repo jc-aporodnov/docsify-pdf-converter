@@ -1,10 +1,10 @@
-module.exports = async (page, { mainMdFilenameWithoutExt, pathToStatic }) => {
+module.exports = async (page, { mainMdFilenameWithoutExt, routeToStatic }) => {
   await page.addScriptTag({
     url: "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js",
   });
 
   return page.evaluate(
-    ({ mainMdFilenameWithoutExt, pathToStatic }) => {
+    ({ mainMdFilenameWithoutExt, routeToStatic }) => {
       const errors = [];
 
       const makeDocsifyPrettyPrintable = () => {
@@ -73,7 +73,7 @@ module.exports = async (page, { mainMdFilenameWithoutExt, pathToStatic }) => {
       const extractInternalLinks = () => {
         const allInternalLinks = [
           ...document.querySelectorAll(
-            `[href*="#/${pathToStatic}/${mainMdFilenameWithoutExt}?id="]`,
+            `[href*="#/${routeToStatic}/${mainMdFilenameWithoutExt}?id="]`,
           ),
         ].map(node => {
           const [, id] = node.href.split("id=");
@@ -105,6 +105,6 @@ module.exports = async (page, { mainMdFilenameWithoutExt, pathToStatic }) => {
 
       return errors;
     },
-    { mainMdFilenameWithoutExt, pathToStatic },
+    { mainMdFilenameWithoutExt, routeToStatic },
   );
 };

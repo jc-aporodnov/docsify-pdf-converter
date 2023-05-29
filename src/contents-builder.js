@@ -25,11 +25,12 @@ const createRoadMap = ({ contents }) => async () => {
 
   const contentsArray = sidebarFileContents.map(({ file, dir }) =>
     markdownLinkExtractor(file)
+      .links
       .filter(link => !isUrl(link))
       .map(link => path.resolve(dir, link)),
   );
 
-  return await flatten(contentsArray);
+  return { roadMap: await flatten(contentsArray), resume: path.resolve(contents[0]) };
 };
 
 module.exports = config => ({

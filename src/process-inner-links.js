@@ -6,6 +6,7 @@ const parser = require("remark-parse");
 module.exports = ({ content, name }, _, arr) => {
   let newContent = content;
   const b = markdownLinkExtractor(content)
+    .links
     .filter(link => path.parse(link).ext === ".md")
     .map(link => ({ file: arr.find(({ name }) => name.includes(link)), link }))
     .filter(({ file }) => file)

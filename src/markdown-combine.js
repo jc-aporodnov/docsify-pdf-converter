@@ -9,34 +9,41 @@ const [readFile, writeFile, exists] = [fs.readFile, fs.writeFile, fs.exists].map
   util.promisify(fn),
 );
 
-const combineMarkdowns = ({ contents, pathToStatic, mainMdFilename }) => async links => {
+const combineMarkdowns = ({ contents, pathToStatic, mainMdFilename }) => async (links, resumeLink) => {
   try {
-    const files = await Promise.all(
-      await links.map(async filename => {
-        const fileExist = await exists(filename);
+    const getFile = async (filename) => {
+      const fileExist = await exists(filename);
 
-        if (fileExist) {
-          const content = await readFile(filename, {
-            encoding: "utf8",
-          });
+      if (fileExist) {
+        const content = await readFile(filename, {
+          encoding: "utf8",
+        });
 
-          return {
-            content,
-            name: filename,
-          };
-        }
+        return {
+          content,
+          name: filename,
+        };
+      }
 
-        throw new Error(`file ${filename} is not exist, but listed in ${contents}`);
-      }),
-    );
+      throw new Error(`file ${filename} is not exist, but listed in ${contents}`);
+    };
+
+    const resumeFile = await getFile(resumeLink);
+
+    const files = await Promise.all(await links.map(getFile));
 
     const resultFilePath = path.resolve(pathToStatic, mainMdFilename);
 
     try {
+      resumeFile.content += "\n <br/><br/><br/><br/><br/><br/> \n"
+
+      files.unshift(resumeFile);
+
       const content = files
         .map(processInnerLinks)
         .map(processImagesPaths({ pathToStatic }))
         .join("\n\n\n\n");
+
       await writeFile(resultFilePath, content);
     } catch (e) {
       logger.err("markdown combining error", e);
