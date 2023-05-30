@@ -13,7 +13,7 @@ const defaultConfig = {
   emulateMedia: 'screen', // mediaType, emulating by puppeteer for rendering pdf, 'print' by default (reference:
   // https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageemulatemediamediatype)
   pathToDocsifyEntryPoint: '.',
-  pathToStatic: 'docs/static',
+  pathToStatic: 'html/docs/static',
   routeToStatic: 'static',
   mainMdFilename: 'main.md',
   pdfOptions: {
@@ -29,17 +29,17 @@ const defaultConfig = {
 const run = async incomingConfig => {
   const preBuildedConfig = merge(defaultConfig, incomingConfig);
 
-  fs.readdirSync('docs').forEach(file => {
+  fs.readdirSync('html/docs').forEach(file => {
     if (new RegExp(/([^\/]+\.md)$/).test(file) && !(new RegExp(/(_sidebar.md)$/).test(file))) {
       return;
     }
 
     if (new RegExp(/(_sidebar.md)$/).test(file)) {
-      preBuildedConfig.contents.push('docs/' + file);
+      preBuildedConfig.contents.push('html/docs/' + file);
     } else {
-      fs.readdirSync('docs/' + file).forEach(file1 => {
+      fs.readdirSync('html/docs/' + file).forEach(file1 => {
         if (new RegExp(/(_sidebar.md)$/).test(file1)) {
-          preBuildedConfig.contents.push('docs/' + file + '/' + file1);
+          preBuildedConfig.contents.push('html/docs/' + file + '/' + file1);
         }
       })
     }
