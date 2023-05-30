@@ -6,8 +6,8 @@ const fs = require("fs");
 
 const defaultConfig = {
   contents: [], // array of "table of contents" files path
-  pathToPublic: 'files/pdf', // path where pdf will stored
-  pathToPublicHtml: 'files/html', // path where pdf will stored
+  pathToPublic: 'pdf', // path where pdf will stored
+  pathToPublicHtml: 'html', // path where pdf will stored
   pathToDocsifyStyles: 'assets/css/docsify4-themes-vue.css', // path where pdf will stored
   removeTemp: true, // remove generated .md and .html or not
   emulateMedia: 'screen', // mediaType, emulating by puppeteer for rendering pdf, 'print' by default (reference:
@@ -17,7 +17,8 @@ const defaultConfig = {
   routeToStatic: 'static',
   mainMdFilename: 'main.md',
   pdfOptions: {
-    format: 'A2', margin: {
+    format: 'A2',
+    margin: {
       bottom: 120, // minimum required for footer msg to display
       left: 0,
       right: 0,
