@@ -9,7 +9,7 @@ const [readFile, writeFile, exists] = [fs.readFile, fs.writeFile, fs.exists].map
   util.promisify(fn),
 );
 
-const combineMarkdowns = ({ contents, pathToStatic, mainMdFilename }) => async (links, resumeLink) => {
+const combineMarkdowns = ({ contents, pathToStatic, mainMdFilename, addResumeFor, finalName }) => async (links, resumeLink) => {
   try {
     const getFile = async (filename) => {
       const fileExist = await exists(filename);
@@ -28,16 +28,18 @@ const combineMarkdowns = ({ contents, pathToStatic, mainMdFilename }) => async (
       throw new Error(`file ${filename} is not exist, but listed in ${contents}`);
     };
 
-    const resumeFile = await getFile(resumeLink);
-
     const files = await Promise.all(await links.map(getFile));
 
     const resultFilePath = path.resolve(pathToStatic, mainMdFilename);
 
     try {
-      resumeFile.content += "\n <br/><br/><br/><br/><br/><br/> \n"
+      if (addResumeFor.includes(finalName)) {
+        const resumeFile = await getFile(resumeLink);
 
-      files.unshift(resumeFile);
+        resumeFile.content += "\n <br/><br/><br/><br/><br/><br/> \n"
+
+        files.unshift(resumeFile);
+      }
 
       const content = files
         .map(processInnerLinks)

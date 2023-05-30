@@ -5,21 +5,17 @@ const getFreePorts = require("./free-port.js");
 const fs = require("fs");
 
 const defaultConfig = {
-  contents: [], // array of "table of contents" files path
+  addResumeFor: ['docs', 'code-guides'], // split documentation file with `_sidebar.md`
   pathToPublic: 'pdf', // path where pdf will stored
-  pathToPublicHtml: 'html', // path where pdf will stored
-  pathToDocsifyStyles: 'assets/css/docsify4-themes-vue.css', // path where pdf will stored
-  removeTemp: true, // remove generated .md and .html or not
-  emulateMedia: 'screen', // mediaType, emulating by puppeteer for rendering pdf, 'print' by default (reference:
-  // https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageemulatemediamediatype)
-  pathToDocsifyEntryPoint: '.',
-  pathToStatic: 'docs/static',
-  routeToStatic: 'static',
-  mainMdFilename: 'main.md',
-  pdfOptions: {
+  pathToPublicHtml: 'html', // path where html will stored
+  pathToDocsifyStyles: 'assets/css/docsify4-themes-vue.css', // path where docsify styles file is stored
+  removeTemp: true, // remove temporary generated .md and .html in `docs` folder or not
+  emulateMedia: 'screen', // mediaType, emulating by puppeteer for rendering pdf (reference: https://pptr.dev/api/puppeteer.page.emulatemediatype)
+  pathToDocsifyEntryPoint: '.', // path where docsify `index.html` file is stored
+  pdfOptions: { // options for rendering pdf (reference: https://pptr.dev/api/puppeteer.pdfoptions)
     format: 'A2',
     margin: {
-      bottom: 120, // minimum required for footer msg to display
+      bottom: 120,
       left: 0,
       right: 0,
       top: 70,
@@ -29,6 +25,10 @@ const defaultConfig = {
 
 const run = async incomingConfig => {
   const preBuildedConfig = merge(defaultConfig, incomingConfig);
+  preBuildedConfig.contents = [];
+  preBuildedConfig.pathToStatic = 'docs/static';
+  preBuildedConfig.routeToStatic = 'static';
+  preBuildedConfig.mainMdFilename = 'main.md';
 
   fs.readdirSync('docs').forEach(file => {
     if (new RegExp(/([^\/]+\.md)$/).test(file) && !(new RegExp(/(_sidebar.md)$/).test(file))) {

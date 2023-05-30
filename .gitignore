@@ -1,4 +1,7 @@
 .idea/
 node_modules/
 .vscode/
-static/
+
+.bin
+!.bin/cli.js
+!.bin/.docsifytopdfrc.js
