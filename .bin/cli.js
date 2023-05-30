@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 const rcfile = require("rcfile");
+console.log(process.cwd());
 
 const config = rcfile("docsifytopdf");
-
-console.log(process.cwd());
 
 require("../src/index.js")(config);
