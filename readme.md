@@ -6,7 +6,7 @@
 npm install
 ```
 
-## Use custom configuration:
+## Using custom configuration:
 
 Create:
 
